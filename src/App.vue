@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 type WheelSegment = {
   label: string
@@ -7,34 +7,40 @@ type WheelSegment = {
   chance: number
 }
 
-const segments: WheelSegment[] = [
-  { label: '10% Off', color: '#f97316', chance: 0 },
-  { label: 'Gift Box', color: '#ef4444', chance: 0 },
-  { label: 'Try Again', color: '#ec4899', chance: 100 },
-  { label: 'Free Ship', color: '#8b5cf6', chance: 0 },
-  { label: '50 Points', color: '#3b82f6', chance: 0 },
-  { label: 'Jackpot', color: '#14b8a6', chance: 0 },
-]
-
-const totalChance = segments.reduce((total, segment) => total + segment.chance, 0)
-
-if (totalChance !== 100) {
-  throw new Error(`Wheel segment chances must total 100. Received ${totalChance}.`)
+type ApiWheelSegment = {
+  id: number
+  name: string
+  color: string
+  chance: number
 }
 
-const segmentAngle = 360 / segments.length
+const segmentsApiKey = 'wheel-segments-key'
+const segments = ref<WheelSegment[]>([])
 const baseRotation = ref(0)
 const spinning = ref(false)
 const activeIndex = ref<number | null>(null)
+const loading = ref(true)
+const loadError = ref('')
 const wheelSize = 760
 const center = wheelSize / 2
 const outerRadius = 340
 const innerRadius = 104
 const labelRadius = 242
+const segmentAngle = computed(() => {
+  return segments.value.length > 0 ? 360 / segments.value.length : 0
+})
 
 const buttonLabel = computed(() => {
   if (spinning.value) {
     return 'Spinning...'
+  }
+
+  if (loading.value) {
+    return 'Loading...'
+  }
+
+  if (loadError.value) {
+    return 'Unavailable'
   }
 
   if (activeIndex.value === null) {
@@ -49,21 +55,29 @@ const indicatorLabel = computed(() => {
     return 'Spinning'
   }
 
+  if (loading.value) {
+    return 'Loading'
+  }
+
+  if (loadError.value) {
+    return 'Error'
+  }
+
   if (activeIndex.value === null) {
     return 'Spin'
   }
 
-  return segments[activeIndex.value]?.label ?? 'Spin'
+  return segments.value[activeIndex.value]?.label ?? 'Spin'
 })
 
 const sliceGeometry = computed(() => {
-  return segments.map((segment, index) => {
-    const startAngle = -90 + index * segmentAngle
-    const endAngle = startAngle + segmentAngle
-    const midAngle = startAngle + segmentAngle / 2
+  return segments.value.map((segment, index) => {
+    const startAngle = -90 + index * segmentAngle.value
+    const endAngle = startAngle + segmentAngle.value
+    const midAngle = startAngle + segmentAngle.value / 2
     const start = polarToCartesian(outerRadius, startAngle)
     const end = polarToCartesian(outerRadius, endAngle)
-    const largeArcFlag = segmentAngle > 180 ? 1 : 0
+    const largeArcFlag = segmentAngle.value > 180 ? 1 : 0
     const labelPoint = polarToCartesian(labelRadius, midAngle)
 
     return {
@@ -91,7 +105,7 @@ function polarToCartesian(radius: number, angleInDegrees: number) {
 }
 
 function pickSegmentIndexByChance() {
-  const weightedSegments = segments.flatMap((segment, index) => {
+  const weightedSegments = segments.value.flatMap((segment, index) => {
     return Array.from({ length: segment.chance }, () => index)
   })
 
@@ -105,14 +119,14 @@ function pickSegmentIndexByChance() {
 }
 
 function spinWheel() {
-  if (spinning.value) {
+  if (spinning.value || loading.value || loadError.value || segments.value.length === 0) {
     return
   }
 
   const nextIndex = pickSegmentIndexByChance()
   const fullSpins = 5
   const pointerAngle = -90
-  const segmentCenter = -90 + nextIndex * segmentAngle + segmentAngle / 2
+  const segmentCenter = -90 + nextIndex * segmentAngle.value + segmentAngle.value / 2
   const currentRotation = ((baseRotation.value % 360) + 360) % 360
   const targetRotation =
     fullSpins * 360 + (pointerAngle - (currentRotation + segmentCenter) + 360) % 360
@@ -126,16 +140,65 @@ function spinWheel() {
     spinning.value = false
   }, 4800)
 }
+
+async function loadSegments() {
+  loading.value = true
+  loadError.value = ''
+
+  try {
+    const response = await fetch('/api/segments.json', {
+      headers: {
+        'X-Wheel-Key': segmentsApiKey,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to load wheel options. HTTP ${response.status}`)
+    }
+
+    const data = (await response.json()) as ApiWheelSegment[]
+    const nextSegments = data.map((segment) => ({
+      label: segment.name,
+      color: segment.color,
+      chance: Number(segment.chance),
+    }))
+    const totalChance = nextSegments.reduce((total, segment) => total + segment.chance, 0)
+
+    if (nextSegments.length === 0) {
+      throw new Error('No wheel options were returned by the API.')
+    }
+
+    if (totalChance !== 100) {
+      throw new Error(`Wheel segment chances must total 100. Received ${totalChance}.`)
+    }
+
+    segments.value = nextSegments
+    activeIndex.value = null
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : 'Failed to load wheel options.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadSegments()
+})
 </script>
 
 <template>
   <main class="relative isolate grid min-h-screen place-items-center overflow-hidden px-6 py-8">
-    <div class="absolute inset-0 -z-20 bg-[linear-gradient(180deg,_#0f172a_0%,_#111827_45%,_#020617_100%)]"></div>
+    <div class="absolute inset-0 -z-20 bg-[linear-gradient(180deg,#0f172a_0%,#111827_45%,#020617_100%)]"></div>
     <div
-      class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_18%,_rgba(255,255,255,0.12),_transparent_18%),radial-gradient(circle_at_20%_80%,_rgba(249,115,22,0.12),_transparent_22%),radial-gradient(circle_at_82%_24%,_rgba(59,130,246,0.14),_transparent_20%)]">
+      class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.12),transparent_18%),radial-gradient(circle_at_20%_80%,rgba(249,115,22,0.12),transparent_22%),radial-gradient(circle_at_82%_24%,rgba(59,130,246,0.14),transparent_20%)]">
     </div>
 
     <section class="flex w-full max-w-6xl flex-col items-center gap-10">
+      <p v-if="loadError"
+        class="rounded-full border border-rose-200/30 bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-100">
+        {{ loadError }}
+      </p>
+
       <div class="relative flex w-full items-center justify-center">
         <div id="indicator"
           class="absolute top-1/2 z-30 flex -translate-y-[18.9rem] flex-col items-center sm:-translate-y-[22.2rem] md:-translate-y-[25.6rem]">
@@ -149,19 +212,19 @@ function spinWheel() {
               class="h-3.5 w-3.5 rounded-full border border-white/60 bg-slate-950 shadow-[0_0_0_4px_rgba(15,23,42,0.42)]">
             </div>
             <div
-              class="h-0 w-0 border-x-[14px] border-t-[22px] border-x-transparent border-t-white drop-shadow-[0_8px_12px_rgba(15,23,42,0.3)]">
+              class="h-0 w-0 border-x-14 border-t-22 border-x-transparent border-t-white drop-shadow-[0_8px_12px_rgba(15,23,42,0.3)]">
             </div>
           </div>
         </div>
 
         <div
-          class="absolute h-[25rem] w-[25rem] rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.18),_transparent_60%)] blur-3xl sm:h-[31rem] sm:w-[31rem] md:h-[36rem] md:w-[36rem]">
+          class="absolute h-100 w-100 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.18),transparent_60%)] blur-3xl sm:h-124 sm:w-124 md:h-144 md:w-xl">
         </div>
 
         <div
-          class="relative rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-[0_30px_120px_rgba(2,6,23,0.55)] backdrop-blur-2xl sm:p-6">
+          class="relative rounded-4xl border border-white/10 bg-white/5 p-4 shadow-[0_30px_120px_rgba(2,6,23,0.55)] backdrop-blur-2xl sm:p-6">
           <div
-            class="relative h-[26rem] w-[26rem] transition-transform duration-[4800ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:h-[32rem] sm:w-[32rem] md:h-[37rem] md:w-[37rem]"
+            class="relative h-104 w-104 transition-transform duration-4800 ease-[cubic-bezier(0.16,1,0.3,1)] sm:h-128 sm:w-lg md:h-148 md:w-148"
             :style="{ transform: `rotate(${baseRotation}deg)` }">
             <svg class="h-full w-full drop-shadow-[0_35px_80px_rgba(15,23,42,0.4)]" viewBox="0 0 760 760" fill="none"
               xmlns="http://www.w3.org/2000/svg">
@@ -206,8 +269,8 @@ function spinWheel() {
       </div>
 
       <button type="button"
-        class="inline-flex min-w-64 items-center justify-center rounded-full border border-white/15 bg-[linear-gradient(135deg,_#fff7ed_0%,_#fdba74_25%,_#f97316_100%)] px-10 py-4 text-base font-black uppercase tracking-[0.24em] text-slate-950 shadow-[0_22px_55px_rgba(249,115,22,0.35)] transition duration-200 hover:scale-[1.02] hover:shadow-[0_28px_70px_rgba(249,115,22,0.45)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
-        :disabled="spinning" @click="spinWheel">
+        class="inline-flex min-w-64 items-center justify-center rounded-full border border-white/15 bg-[linear-gradient(135deg,#fff7ed_0%,#fdba74_25%,#f97316_100%)] px-10 py-4 text-base font-black uppercase tracking-[0.24em] text-slate-950 shadow-[0_22px_55px_rgba(249,115,22,0.35)] transition duration-200 hover:scale-[1.02] hover:shadow-[0_28px_70px_rgba(249,115,22,0.45)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
+        :disabled="spinning || loading || !!loadError || segments.length === 0" @click="spinWheel">
         {{ buttonLabel }}
       </button>
     </section>
