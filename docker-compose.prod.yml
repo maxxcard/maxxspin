@@ -1,0 +1,29 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/frontend.Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:4173:80"
+    restart: unless-stopped
+    networks:
+      - app
+
+  api:
+    build:
+      context: ./api
+      dockerfile: ../deploy/api.Dockerfile
+    restart: unless-stopped
+    volumes:
+      - api-data:/app/data
+    networks:
+      - app
+
+volumes:
+  api-data:
+
+networks:
+  app:
+    driver: bridge

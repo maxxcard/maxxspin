@@ -22,8 +22,9 @@ final class AppAuthMiddleware
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
         $pdo = Database::connect();
+        $path = $request->getUri()->getPath();
 
-        if ($request->getUri()->getPath() === '/segments.json') {
+        if ($path === '/segments.json' || $path === '/send-data') {
             return $this->authorizeApiKey($request, $handler, $pdo);
         }
 

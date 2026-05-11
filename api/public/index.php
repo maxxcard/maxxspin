@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Action\SegmentEditorAction;
+use App\Action\SendDataAction;
 use App\Action\SegmentsJsonAction;
 use App\Middleware\AppAuthMiddleware;
 use Slim\Factory\AppFactory;
@@ -14,6 +15,7 @@ $app->addBodyParsingMiddleware();
 $app->add(new AppAuthMiddleware('wheel-segments-key'));
 
 $app->get('/segments.json', new SegmentsJsonAction());
-$app->map(['GET', 'POST'], '/', new SegmentEditorAction());
+$app->post('/send-data', new SendDataAction());
+$app->map(['GET', 'POST'], '/dashboard', new SegmentEditorAction());
 
 $app->run();

@@ -47,6 +47,17 @@ final class Database
             )'
         );
 
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS contacts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                company TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )'
+        );
+
         $existingUsers = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
 
         if ($existingUsers === 0) {
