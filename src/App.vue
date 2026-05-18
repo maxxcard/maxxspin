@@ -24,7 +24,8 @@ const loading = ref(true)
 const loadError = ref('')
 const submitError = ref('')
 const formData = ref({
-  name: '',
+  firstName: '',
+  lastName: '',
   email: '',
   company: '',
   phone: '',
@@ -231,7 +232,8 @@ function handlePhoneKeydown(event: KeyboardEvent) {
 
 function resetFormData() {
   formData.value = {
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     company: '',
     phone: '',
@@ -240,7 +242,7 @@ function resetFormData() {
 
 async function sendFormData() {
   const payload = {
-    name: formData.value.name.trim(),
+    name: `${formData.value.firstName.trim()} ${formData.value.lastName.trim()}`.trim(),
     email: formData.value.email.trim(),
     company: formData.value.company.trim(),
     phone: phoneDigits.value,
@@ -436,12 +438,18 @@ onMounted(() => {
           <div class="grid gap-4">
             <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
               <span>Nome</span>
-              <input v-model="formData.name" type="text" autocomplete="name" placeholder="Seu nome"
+              <input v-model="formData.firstName" type="text" autocomplete="given-name" placeholder="Seu nome"
                 class="rounded-2xl border border-white/12 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-300/70 focus:bg-slate-950" />
             </label>
 
             <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
-              <span>E-mail</span>
+              <span>Sobrenome</span>
+              <input v-model="formData.lastName" type="text" autocomplete="family-name" placeholder="Seu sobrenome"
+                class="rounded-2xl border border-white/12 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-300/70 focus:bg-slate-950" />
+            </label>
+
+            <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
+              <span>E-mail coorporativo</span>
               <input v-model="formData.email" type="email" autocomplete="email" placeholder="voce@empresa.com"
                 :class="showEmailError ? 'border-rose-400/80 focus:border-rose-300/90' : 'border-white/12 focus:border-orange-300/70'"
                 class="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-slate-950" />
