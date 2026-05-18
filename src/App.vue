@@ -401,12 +401,9 @@ onMounted(() => {
 
                 <g v-for="slice in sliceGeometry" :key="slice.label">
                   <path :d="slice.path" :fill="slice.color" stroke="rgba(255,255,255,0.22)" stroke-width="3" />
-                  <path :d="slice.path" fill="url(#sliceGloss)" opacity="0.2" />
                   <g :transform="`translate(${slice.labelX} ${slice.labelY}) rotate(${slice.labelRotation})`">
-                    <rect x="-78" y="-22" width="156" height="44" rx="22" fill="rgba(255,255,255,0.14)"
-                      stroke="rgba(255,255,255,0.24)" />
                     <text text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.98)" font-size="22"
-                      font-weight="700" letter-spacing="0.4">
+                      font-weight="700" letter-spacing="0.4" style="paint-order: stroke; stroke: rgba(15,23,42,0.42); stroke-width: 8px; stroke-linejoin: round;">
                       {{ slice.label }}
                     </text>
                   </g>
@@ -424,10 +421,6 @@ onMounted(() => {
                     <stop offset="0.48" stop-color="#f59e0b" />
                     <stop offset="1" stop-color="#ea580c" />
                   </radialGradient>
-                  <linearGradient id="sliceGloss" x1="150" y1="110" x2="650" y2="650" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="white" />
-                    <stop offset="1" stop-color="white" stop-opacity="0" />
-                  </linearGradient>
                 </defs>
               </svg>
             </div>
