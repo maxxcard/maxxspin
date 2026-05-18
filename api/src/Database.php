@@ -54,6 +54,7 @@ final class Database
                 last_name TEXT NOT NULL DEFAULT \'\',
                 email TEXT NOT NULL,
                 company TEXT NOT NULL,
+                cargo TEXT NOT NULL DEFAULT \'\',
                 phone TEXT NOT NULL,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )'
@@ -61,6 +62,10 @@ final class Database
 
         if (!self::tableHasColumn($pdo, 'contacts', 'last_name')) {
             $pdo->exec('ALTER TABLE contacts ADD COLUMN last_name TEXT NOT NULL DEFAULT \'\'');
+        }
+
+        if (!self::tableHasColumn($pdo, 'contacts', 'cargo')) {
+            $pdo->exec('ALTER TABLE contacts ADD COLUMN cargo TEXT NOT NULL DEFAULT \'\'');
         }
 
         $existingUsers = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();

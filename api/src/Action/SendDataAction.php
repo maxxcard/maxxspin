@@ -26,6 +26,7 @@ final class SendDataAction
         $fullName = trim((string) ($payload['name'] ?? ''));
         $email = trim((string) ($payload['email'] ?? ''));
         $company = trim((string) ($payload['company'] ?? ''));
+        $cargo = trim((string) ($payload['cargo'] ?? ''));
         $phone = trim((string) ($payload['phone'] ?? ''));
 
         if ($firstName === '' && $fullName !== '') {
@@ -48,6 +49,10 @@ final class SendDataAction
             $errors['company'] = 'Company is required.';
         }
 
+        if ($cargo === '') {
+            $errors['cargo'] = 'Cargo is required.';
+        }
+
         if ($phone === '') {
             $errors['phone'] = 'Phone is required.';
         }
@@ -64,7 +69,7 @@ final class SendDataAction
         }
 
         $repository = new ContactRepository($pdo);
-        $contactId = $repository->create($firstName, $lastName, $email, $company, $phone);
+        $contactId = $repository->create($firstName, $lastName, $email, $company, $cargo, $phone);
 
         $response->getBody()->write((string) json_encode([
             'success' => true,

@@ -28,6 +28,7 @@ const formData = ref({
   lastName: '',
   email: '',
   company: '',
+  cargo: '',
   phone: '',
 })
 const wheelSize = 760
@@ -236,6 +237,7 @@ function resetFormData() {
     lastName: '',
     email: '',
     company: '',
+    cargo: '',
     phone: '',
   }
 }
@@ -247,6 +249,7 @@ async function sendFormData() {
     name: `${formData.value.firstName.trim()} ${formData.value.lastName.trim()}`.trim(),
     email: formData.value.email.trim(),
     company: formData.value.company.trim(),
+    cargo: formData.value.cargo.trim(),
     phone: phoneDigits.value,
   }
 
@@ -456,6 +459,12 @@ onMounted(() => {
             <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
               <span>Empresa</span>
               <input v-model="formData.company" type="text" autocomplete="organization" placeholder="Nome da empresa"
+                class="rounded-2xl border border-white/12 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-300/70 focus:bg-slate-950" />
+            </label>
+
+            <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
+              <span>Cargo</span>
+              <input v-model="formData.cargo" type="text" autocomplete="organization-title" placeholder="Seu cargo"
                 class="rounded-2xl border border-white/12 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-300/70 focus:bg-slate-950" />
             </label>
 

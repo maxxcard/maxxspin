@@ -81,6 +81,28 @@ $totalChance = 0;
         </form>
       </section>
     </main>
+
+    <template id="segment-row-template">
+      <div class="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1.45fr_0.85fr_0.75fr_auto]">
+        <label class="block space-y-2">
+          <span class="text-sm font-semibold text-slate-700">Name</span>
+          <input class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200" type="text" name="segment_name[]" data-field="name" value="">
+        </label>
+        <label class="block space-y-2">
+          <span class="text-sm font-semibold text-slate-700">Color</span>
+          <input class="h-[52px] w-full rounded-xl border border-slate-300 bg-white px-2 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200" type="color" name="segment_color[]" data-field="color" value="#38bdf8">
+        </label>
+        <label class="block space-y-2">
+          <span class="text-sm font-semibold text-slate-700">Chance</span>
+          <input class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200" type="number" min="0" max="100" step="1" name="segment_chance[]" data-field="chance" value="0">
+        </label>
+        <div class="flex items-end">
+          <button class="w-full rounded-xl border border-rose-200 px-4 py-3 text-sm font-bold uppercase tracking-[0.14em] text-rose-600 transition hover:border-rose-300 hover:bg-rose-50" type="button" data-remove-row>
+            Remove
+          </button>
+        </div>
+      </div>
+    </template>
     
     <script>
       const rowsContainer = document.getElementById('rows-container');
@@ -99,6 +121,10 @@ $totalChance = 0;
       }
 
       function addRow() {
+        if (!rowsContainer || !rowTemplate) {
+          return;
+        }
+
         rowsContainer.appendChild(rowTemplate.content.cloneNode(true));
         updateTotal();
       }
@@ -122,7 +148,7 @@ $totalChance = 0;
       updateTotal();
 
       form.addEventListener('input', (event) => {
-        if (event.target.matches('[data-field="chance"]')) {
+        if (event.target instanceof Element && event.target.matches('[data-field="chance"]')) {
           updateTotal();
         }
       });
@@ -132,7 +158,7 @@ $totalChance = 0;
       });
 
       form.addEventListener('click', (event) => {
-        if (event.target.matches('[data-remove-row]')) {
+        if (event.target instanceof Element && event.target.matches('[data-remove-row]')) {
           removeRow(event.target);
         }
       });
