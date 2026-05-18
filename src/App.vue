@@ -242,6 +242,8 @@ function resetFormData() {
 
 async function sendFormData() {
   const payload = {
+    firstName: formData.value.firstName.trim(),
+    lastName: formData.value.lastName.trim(),
     name: `${formData.value.firstName.trim()} ${formData.value.lastName.trim()}`.trim(),
     email: formData.value.email.trim(),
     company: formData.value.company.trim(),

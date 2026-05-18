@@ -51,12 +51,17 @@ final class Database
             'CREATE TABLE IF NOT EXISTS contacts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
+                last_name TEXT NOT NULL DEFAULT \'\',
                 email TEXT NOT NULL,
                 company TEXT NOT NULL,
                 phone TEXT NOT NULL,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )'
         );
+
+        if (!self::tableHasColumn($pdo, 'contacts', 'last_name')) {
+            $pdo->exec('ALTER TABLE contacts ADD COLUMN last_name TEXT NOT NULL DEFAULT \'\'');
+        }
 
         $existingUsers = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
 
@@ -90,5 +95,18 @@ final class Database
                 ]);
             }
         }
+    }
+
+    private static function tableHasColumn(PDO $pdo, string $table, string $column): bool
+    {
+        $statement = $pdo->query(sprintf('PRAGMA table_info(%s)', $table));
+
+        foreach ($statement->fetchAll() as $definition) {
+            if (($definition['name'] ?? null) === $column) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

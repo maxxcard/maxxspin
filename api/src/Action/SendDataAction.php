@@ -21,14 +21,20 @@ final class SendDataAction
         }
 
         $payload = (array) $request->getParsedBody();
-        $name = trim((string) ($payload['name'] ?? ''));
+        $firstName = trim((string) ($payload['firstName'] ?? ''));
+        $lastName = trim((string) ($payload['lastName'] ?? ''));
+        $fullName = trim((string) ($payload['name'] ?? ''));
         $email = trim((string) ($payload['email'] ?? ''));
         $company = trim((string) ($payload['company'] ?? ''));
         $phone = trim((string) ($payload['phone'] ?? ''));
 
+        if ($firstName === '' && $fullName !== '') {
+            [$firstName, $lastName] = $this->splitName($fullName);
+        }
+
         $errors = [];
 
-        if ($name === '') {
+        if ($firstName === '') {
             $errors['name'] = 'Name is required.';
         }
 
@@ -58,7 +64,7 @@ final class SendDataAction
         }
 
         $repository = new ContactRepository($pdo);
-        $contactId = $repository->create($name, $email, $company, $phone);
+        $contactId = $repository->create($firstName, $lastName, $email, $company, $phone);
 
         $response->getBody()->write((string) json_encode([
             'success' => true,
@@ -69,5 +75,21 @@ final class SendDataAction
         return $response
             ->withStatus(201)
             ->withHeader('Content-Type', 'application/json; charset=utf-8');
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function splitName(string $fullName): array
+    {
+        $parts = preg_split('/\s+/', trim($fullName)) ?: [];
+
+        if ($parts === []) {
+            return ['', ''];
+        }
+
+        $firstName = (string) array_shift($parts);
+
+        return [$firstName, trim(implode(' ', $parts))];
     }
 }
