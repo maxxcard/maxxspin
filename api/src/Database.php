@@ -56,6 +56,7 @@ final class Database
                 company TEXT NOT NULL,
                 cargo TEXT NOT NULL DEFAULT \'\',
                 phone TEXT NOT NULL,
+                prize_won TEXT NOT NULL DEFAULT \'\',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )'
         );
@@ -66,6 +67,10 @@ final class Database
 
         if (!self::tableHasColumn($pdo, 'contacts', 'cargo')) {
             $pdo->exec('ALTER TABLE contacts ADD COLUMN cargo TEXT NOT NULL DEFAULT \'\'');
+        }
+
+        if (!self::tableHasColumn($pdo, 'contacts', 'prize_won')) {
+            $pdo->exec('ALTER TABLE contacts ADD COLUMN prize_won TEXT NOT NULL DEFAULT \'\'');
         }
 
         $existingUsers = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();

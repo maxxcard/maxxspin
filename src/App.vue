@@ -242,7 +242,7 @@ function resetFormData() {
   }
 }
 
-async function sendFormData() {
+async function sendFormData(prizeWon: string) {
   const payload = {
     firstName: formData.value.firstName.trim(),
     lastName: formData.value.lastName.trim(),
@@ -251,6 +251,7 @@ async function sendFormData() {
     company: formData.value.company.trim(),
     cargo: formData.value.cargo.trim(),
     phone: phoneDigits.value,
+    prizeWon,
   }
 
   const response = await fetch('/api/send-data', {
@@ -267,12 +268,17 @@ async function sendFormData() {
   }
 }
 
-function spinWheel() {
-  if (spinning.value || loading.value || loadError.value || segments.value.length === 0) {
+function spinWheel(nextIndex: number) {
+  if (
+    spinning.value ||
+    loading.value ||
+    loadError.value ||
+    segments.value.length === 0 ||
+    nextIndex < 0 ||
+    nextIndex >= segments.value.length
+  ) {
     return
   }
-
-  const nextIndex = pickSegmentIndexByChance()
   const fullSpins = 5
   const pointerAngle = -90
   const segmentCenter = -90 + nextIndex * segmentAngle.value + segmentAngle.value / 2
@@ -295,13 +301,21 @@ async function handleSpin() {
     return
   }
 
+  const nextIndex = pickSegmentIndexByChance()
+  const selectedPrize = segments.value[nextIndex]?.label ?? ''
+
+  if (selectedPrize === '') {
+    submitError.value = 'Nao foi possivel identificar o premio sorteado.'
+    return
+  }
+
   submitError.value = ''
   submitting.value = true
 
   try {
-    await sendFormData()
+    await sendFormData(selectedPrize)
     resetFormData()
-    spinWheel()
+    spinWheel(nextIndex)
   } catch (error) {
     submitError.value = error instanceof Error ? error.message : 'Falha ao enviar os dados do formulario.'
   } finally {

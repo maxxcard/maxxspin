@@ -18,11 +18,12 @@ final class ContactRepository
         string $email,
         string $company,
         string $cargo,
-        string $phone
+        string $phone,
+        string $prizeWon
     ): int
     {
         $statement = $this->pdo->prepare(
-            'INSERT INTO contacts (name, last_name, email, company, cargo, phone) VALUES (:name, :last_name, :email, :company, :cargo, :phone)'
+            'INSERT INTO contacts (name, last_name, email, company, cargo, phone, prize_won) VALUES (:name, :last_name, :email, :company, :cargo, :phone, :prize_won)'
         );
         $statement->execute([
             ':name' => $name,
@@ -31,6 +32,7 @@ final class ContactRepository
             ':company' => $company,
             ':cargo' => $cargo,
             ':phone' => $phone,
+            ':prize_won' => $prizeWon,
         ]);
 
         return (int) $this->pdo->lastInsertId();
